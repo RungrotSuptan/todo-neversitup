@@ -26,7 +26,6 @@ const Todo = ({session}) => {
     const [updateId, setUpdateId] = useState('');
     const [deleteId, setDeleteId] = useState('');
     const [deleteTitle, setDeleteTitle] = useState('');
-    const [getId, setGetId] = useState('');
 
     const openCreateModal = () => {
         setIsOpen(true);
@@ -37,9 +36,8 @@ const Todo = ({session}) => {
     }
 
     const openUpdateModal = (id) => {
-        // let todoWillUpdate = todos.items.find(todo => todo._id === id);
         setUpdateId(id);
-        setGetId(id)
+        getTodo(id)
         setUpdateIsOpen(true);
     }
      
@@ -98,13 +96,15 @@ const Todo = ({session}) => {
         clearTitleAndDesc()
     }
 
-    const getTodo = async () => {
+    const getTodo = async (id) => {
         const access_token = localStorage.getItem('access_token')
-        await Axios.get(`${TODO_ENDPOINT}/todos/${getId}`,{
+        let response = await Axios.get(`${TODO_ENDPOINT}/todos/${id}`,{
             headers: {
                 'Authorization': `Bearer ${access_token}`
             }
         })
+        setTitle(response.data.title)
+        setDescription(response.data.description)
     }
 
     const updateTodo = async () => {
