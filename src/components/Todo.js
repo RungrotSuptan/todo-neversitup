@@ -32,6 +32,7 @@ const Todo = ({session}) => {
     }
      
     const closeCreateModal = () => {
+        clearTitleAndDesc()
         setIsOpen(false);
     }
 
@@ -42,6 +43,7 @@ const Todo = ({session}) => {
     }
      
     const closeUpdateModal = () => {
+        clearTitleAndDesc()
         setUpdateIsOpen(false);
     }
 
