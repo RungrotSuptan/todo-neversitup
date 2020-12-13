@@ -17,49 +17,61 @@ const customStyles = {
 const TODO_ENDPOINT = "https://candidate.neversitup.com/todo"
 
 const Todo = ({session}) => {
-    var subtitle;
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [modalIsOpen, setIsOpen] = useState(false);
-    const [todos, setTodos] = useState({
-        items: []
-    });
+    const [modalUpdateIsOpen, setUpdateIsOpen] = useState(false);
+    const [modalDeleteIsOpen, setDeleteIsOpen] = useState(false);
+    const [todos, setTodos] = useState({ items: [] });
+    const [updateId, setUpdateId] = useState('');
+    const [deleteId, setDeleteId] = useState('');
+    const [deleteTitle, setDeleteTitle] = useState('');
+    const [getId, setGetId] = useState('');
 
-    function openModal() {
+    const openCreateModal = () => {
         setIsOpen(true);
     }
+     
+    const closeCreateModal = () => {
+        setIsOpen(false);
+    }
 
-    function afterOpenModal() {
-        // subtitle.style.color = '#f00';
+    const openUpdateModal = (id) => {
+        // let todoWillUpdate = todos.items.find(todo => todo._id === id);
+        setUpdateId(id);
+        setGetId(id)
+        setUpdateIsOpen(true);
     }
      
-    function closeModal(){
-        setIsOpen(false);
+    const closeUpdateModal = () => {
+        setUpdateIsOpen(false);
+    }
+
+    const openDeleteModal = (id) => {
+        setDeleteId(id);
+        let todoWilltitle = todos.items.find(todo => todo._id === id);
+        setDeleteTitle(todoWilltitle.title)
+        setDeleteIsOpen(true);
+    }
+
+    const closeDeleteModal = () => {
+        setDeleteIsOpen(false);
     }
 
     const handleTitle = event => {
         setTitle(event.target.value)
     }
+
     const handleDescription = event => {
         setDescription(event.target.value)
     }
 
-    async function createTodo (){
-        const access_token = localStorage.getItem('access_token')
-        let response = await Axios.post(`${TODO_ENDPOINT}/todos`,{
-            "title": title,
-	        "description": description
-        },{
-            headers: {
-                'Authorization': `Bearer ${access_token}`
-            }
-        })
-        console.log("create: ",response)
-        fetchTodo()
-        closeModal()
+    const clearTitleAndDesc = () => {
+        setTitle('')
+        setDescription('')
     }
 
-    async function fetchTodo(){
+    const fetchTodo = async () => {
         const access_token = localStorage.getItem('access_token')
         let response = await Axios.get(`${TODO_ENDPOINT}/todos`,{
             headers: {
@@ -71,23 +83,62 @@ const Todo = ({session}) => {
         })
     }
 
-    useEffect(() => {
-        fetchTodo()
-      return () => {
-        // fetchTodo()
-      }
-    }, [])
-
-    function deteteTodo (id){
+    const createTodo = async () => {
         const access_token = localStorage.getItem('access_token')
-        Axios.delete(`${TODO_ENDPOINT}/todos/${id}`,{
+        await Axios.post(`${TODO_ENDPOINT}/todos`,{
+            "title": title,
+	        "description": description
+        },{
+            headers: {
+                'Authorization': `Bearer ${access_token}`
+            }
+        })
+        fetchTodo()
+        closeCreateModal()
+        clearTitleAndDesc()
+    }
+
+    const getTodo = async () => {
+        const access_token = localStorage.getItem('access_token')
+        await Axios.get(`${TODO_ENDPOINT}/todos/${getId}`,{
+            headers: {
+                'Authorization': `Bearer ${access_token}`
+            }
+        })
+    }
+
+    const updateTodo = async () => {
+        const access_token = localStorage.getItem('access_token')
+        await Axios.put(`${TODO_ENDPOINT}/todos/${updateId}`,{
+            "title": title,
+	        "description": description
+        },{
+            headers: {
+                'Authorization': `Bearer ${access_token}`
+            }
+        })
+        fetchTodo()
+        closeUpdateModal()
+        clearTitleAndDesc()
+    }
+
+    const deteteTodo  = async () =>{
+        const access_token = localStorage.getItem('access_token')
+        await Axios.delete(`${TODO_ENDPOINT}/todos/${deleteId}`,{
             headers: {
                 'Authorization': `${access_token}`
             }
-        }).then(res => {
-            fetchTodo()
         })
+        closeDeleteModal()
+        fetchTodo()
+        clearTitleAndDesc()
     }
+
+    useEffect(() => {
+        fetchTodo()
+      return () => {
+      }
+    }, [])
 
     return (
         <div>
@@ -96,37 +147,77 @@ const Todo = ({session}) => {
                 {
                     todos.items.length > 0 ? todos.items.map((todo, key) => {
                         return (
-                        <div key={todo._id}>
-                            <h3 key={key}>{todo.title}</h3>
-                            <p>{todo.description}</p>
-                            <p>created: {todo.createdAt}</p>
-                            <p>updated: {todo.updatedAt}</p>
+                        <div>
+                            <div key={todo._id} onClick={() => {
+                                openUpdateModal(todo._id)
+                            }}>
+                                <h3 key={key}>{todo.title}</h3>
+                                <p>{todo.description}</p>
+                                <p>created: {todo.createdAt}</p>
+                                <p>updated: {todo.updatedAt}</p>
+                            </div>
                             <button type="text" onClick={() => {
-                                deteteTodo(todo._id)
+                                openDeleteModal(todo._id)
                             }}>delete</button>
                         </div>
+                        
                         )
                     }) : <p> Empty press 'Create' for add new todo </p>
                 }
             </div>
 
-            <button onClick={openModal}>Open Modal</button>
+            <div>
+                <button onClick={openCreateModal}>+ Create</button>
+            </div>
+            
             <Modal
                 isOpen={modalIsOpen}
-                onAfterOpen={afterOpenModal}
-                onRequestClose={closeModal}
+                onRequestClose={closeCreateModal}
                 style={customStyles}
                 contentLabel="Create a new todo"
             >
                 <div>
                     <div>Title</div>
-                    <input type="text" placeholder="Title" onChange={handleTitle}/>
+                    <input type="text" placeholder="Title" value={title} onChange={handleTitle}/>
                     <div>Desscription</div>
-                    <input type="text" placeholder="Desscription" onChange={handleDescription}/>
+                    <input type="text" placeholder="Desscription" value={description} onChange={handleDescription}/>
                 </div>
                 <div>
-                    <button type="button" onClick={closeModal}>Cancle</button>
+                    <button type="button" onClick={closeCreateModal}>Cancle</button>
                     <button type="button" onClick={createTodo}>Create</button>
+                </div>
+            </Modal>
+
+            <Modal
+                isOpen={modalUpdateIsOpen}
+                onRequestClose={closeUpdateModal}
+                style={customStyles}
+                contentLabel="Create a new todo"
+            >
+                <div>
+                    <div>Title</div>
+                    <input type="text" placeholder="Title" value={title} onChange={handleTitle}/>
+                    <div>Desscription</div>
+                    <input type="text" placeholder="Desscription" value={description} onChange={handleDescription}/>
+                </div>
+                <div>
+                    <button type="button" onClick={closeUpdateModal}>Cancle</button>
+                    <button type="button" onClick={updateTodo}>Edit</button>
+                </div>
+            </Modal>
+
+            <Modal
+                isOpen={modalDeleteIsOpen}
+                onRequestClose={closeUpdateModal}
+                style={customStyles}
+                contentLabel="Create a new todo"
+            >
+                <div>
+                    want to delete {deleteTitle} ?
+                </div>
+                <div>
+                    <button type="button" onClick={closeDeleteModal}>Cancle</button>
+                    <button type="button" onClick={deteteTodo}>Confirm</button>
                 </div>
             </Modal>
         </div>
